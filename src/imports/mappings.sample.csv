@@ -1,0 +1,5 @@
+Sync operation,Direction,Metronome Field,Metronome Field Type,Metronome Object,Metronome Parent Object (1),Notes,Salesforce Field,Salesforce Object,Transformation / Logic
+Contract,Metronome -> Salesforce,id,Text,Contract,,,Metronome_Contract_Id__c,Contract,Copy from Metronome contract id
+Contract,Salesforce -> Metronome,custom_field_1,Text,Contract,,,Id,Opportunity,Use Opportunity.Id associated to the Order
+Customer,Salesforce -> Metronome,name,Text,Customer,,,Name,Account,Use Account.Name
+Subscription,Salesforce -> Metronome,starting_at,Date,Subscription,,,ServiceDate__c,OrderItem,Use order item service date
