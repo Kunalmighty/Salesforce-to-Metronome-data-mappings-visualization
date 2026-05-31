@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { fetchMappings, Mapping } from "./utils/data";
+import { fetchMappings, Mapping, parseMappingsCsv } from "./utils/data";
 import { MappingCard } from "./components/MappingCard";
-import { LayoutDashboard, Filter, Search, List, Activity, Menu, X, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, Filter, Search, List, Activity, Menu, X, Moon, Sun, Upload, RotateCcw } from "lucide-react";
 
 export default function App() {
   const [mappings, setMappings] = useState<Mapping[]>([]);
@@ -13,6 +13,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [dataSourceName, setDataSourceName] = useState("Bundled CSV");
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check system preference on load
@@ -33,6 +35,7 @@ export default function App() {
     fetchMappings()
       .then((data) => {
         setMappings(data);
+        setDataSourceName("Bundled CSV");
         setLoading(false);
       })
       .catch((err) => {
@@ -41,6 +44,43 @@ export default function App() {
         setLoading(false);
       });
   }, []);
+
+  const resetFilters = () => {
+    setSelectedOperation(null);
+    setSelectedDirection(null);
+    setSearchQuery("");
+  };
+
+  const handleCsvUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      const csvText = await file.text();
+      const data = await parseMappingsCsv(csvText);
+      setMappings(data);
+      setDataSourceName(file.name);
+      setUploadError(null);
+      resetFilters();
+    } catch (err) {
+      console.error(err);
+      setUploadError("Could not parse that CSV.");
+    }
+  };
+
+  const handleResetCsv = async () => {
+    try {
+      const data = await fetchMappings();
+      setMappings(data);
+      setDataSourceName("Bundled CSV");
+      setUploadError(null);
+      resetFilters();
+    } catch (err) {
+      console.error(err);
+      setUploadError("Could not reload the bundled CSV.");
+    }
+  };
 
   const uniqueOperations = useMemo(() => {
     const ops = new Set<string>();
@@ -309,21 +349,57 @@ export default function App() {
               <p className="text-slate-500 dark:text-slate-400 mt-1">
                 Showing {filteredMappings.length} mappings{" "}
                 {selectedDirection ? `for ${selectedDirection}` : ""}
+                <span className="block text-xs mt-1">
+                  Source: {dataSourceName}
+                </span>
               </p>
             </div>
-            <div className="relative w-full md:w-72 shrink-0">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                <Search className="w-4 h-4" />
+            <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3 md:items-center">
+              <div className="flex gap-2">
+                <label
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition cursor-pointer shadow-sm"
+                  title="Upload CSV"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload CSV
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={handleCsvUpload}
+                    className="sr-only"
+                  />
+                </label>
+                {dataSourceName !== "Bundled CSV" && (
+                  <button
+                    onClick={handleResetCsv}
+                    className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm"
+                    title="Use bundled CSV"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset
+                  </button>
+                )}
               </div>
-              <input
-                type="text"
-                placeholder="Search fields, objects, notes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all shadow-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-slate-100"
-              />
+              <div className="relative w-full sm:w-72 shrink-0">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <Search className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search fields, objects, notes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all shadow-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-slate-100"
+                />
+              </div>
             </div>
           </div>
+
+          {uploadError && (
+            <div className="mb-6 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+              {uploadError}
+            </div>
+          )}
 
           <div className="space-y-6">
             {filteredMappings.length === 0 ? (

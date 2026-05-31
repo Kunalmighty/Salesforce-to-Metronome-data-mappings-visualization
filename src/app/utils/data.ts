@@ -5,9 +5,9 @@ export interface Mapping {
   [key: string]: string | undefined;
 }
 
-export const fetchMappings = async (): Promise<Mapping[]> => {
+export const parseMappingsCsv = (csvText: string): Promise<Mapping[]> => {
   return new Promise((resolve, reject) => {
-    Papa.parse<Mapping>(csvFileText, {
+    Papa.parse<Mapping>(csvText, {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header) =>
@@ -21,4 +21,8 @@ export const fetchMappings = async (): Promise<Mapping[]> => {
       error: (error: Error) => reject(error),
     });
   });
+};
+
+export const fetchMappings = async (): Promise<Mapping[]> => {
+  return parseMappingsCsv(csvFileText);
 };

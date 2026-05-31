@@ -18,5 +18,5 @@
 
   ## Data
 
-  This public repo ships with a sample CSV at `src/imports/mappings.sample.csv`. Replace it with your own mappings CSV as needed.
+  This public repo ships with a sample CSV at `src/imports/mappings.sample.csv`. Replace it with your own mappings CSV as needed, or use the in-app CSV upload button to load a local CSV in the deployed app.
   
