@@ -1,7 +1,20 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { fetchMappings, Mapping, parseMappingsCsv } from "./utils/data";
 import { MappingCard } from "./components/MappingCard";
-import { LayoutDashboard, Filter, Search, List, Activity, Menu, X, Moon, Sun, Upload, RotateCcw } from "lucide-react";
+import { LayoutDashboard, Filter, Search, List, Activity, Menu, X, Moon, Sun, Upload, RotateCcw, ArrowLeft, FileText } from "lucide-react";
+
+const csvFormatRows = [
+  ["Sync operation", "Functional area for the mapping, such as Contract Creation or Subscription Creation."],
+  ["Direction", "Use values that begin with Salesforce or Metronome so the app can orient the mapping card."],
+  ["Metronome Field", "Target or source field name in Metronome."],
+  ["Metronome Field Type", "Data type for the Metronome field, such as Text, DateTime, Boolean, or Integer."],
+  ["Metronome Object", "Metronome object that owns the mapped field."],
+  ["Metronome Parent Object (1)", "Optional parent object for nested Metronome structures."],
+  ["Notes", "Optional implementation notes or open questions."],
+  ["Salesforce Field", "Target or source field name in Salesforce."],
+  ["Salesforce Object", "Salesforce object that owns the mapped field."],
+  ["Transformation / Logic", "Optional transformation, derivation, or lookup instructions."],
+];
 
 export default function App() {
   const [mappings, setMappings] = useState<Mapping[]>([]);
@@ -15,6 +28,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [dataSourceName, setDataSourceName] = useState("Bundled CSV");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showUploadGuide, setShowUploadGuide] = useState(false);
 
   useEffect(() => {
     // Check system preference on load
@@ -62,11 +76,18 @@ export default function App() {
       setMappings(data);
       setDataSourceName(file.name);
       setUploadError(null);
+      setShowUploadGuide(false);
       resetFilters();
     } catch (err) {
       console.error(err);
       setUploadError("Could not parse that CSV.");
     }
+  };
+
+  const openUploadGuide = () => {
+    setUploadError(null);
+    setMobileMenuOpen(false);
+    setShowUploadGuide(true);
   };
 
   const handleResetCsv = async () => {
@@ -137,6 +158,103 @@ export default function App() {
             Retry
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (showUploadGuide) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20">
+          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+            <button
+              onClick={() => setShowUploadGuide(false)}
+              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to mappings
+            </button>
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              title="Toggle theme"
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
+        </header>
+
+        <main className="max-w-5xl mx-auto px-6 py-8">
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-sm font-medium mb-4">
+              <FileText className="w-4 h-4" />
+              CSV upload
+            </div>
+            <h1 className="text-3xl font-bold text-slate-950 dark:text-white">
+              Prepare your mappings CSV
+            </h1>
+            <p className="mt-3 text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
+              Upload a comma-separated CSV with one mapping per row. Keep the header names exactly as shown so filters, mapping cards, and search can read each column correctly.
+            </p>
+          </div>
+
+          <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-slate-950 dark:text-white">Required columns</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Column order can vary, but these header labels must be present.
+                </p>
+              </div>
+              <label
+                className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition cursor-pointer shadow-sm"
+                title="Upload CSV"
+              >
+                <Upload className="w-4 h-4" />
+                Choose CSV
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleCsvUpload}
+                  className="sr-only"
+                />
+              </label>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400">
+                  <tr>
+                    <th className="text-left font-semibold px-5 py-3">Header</th>
+                    <th className="text-left font-semibold px-5 py-3">Expected content</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {csvFormatRows.map(([header, description]) => (
+                    <tr key={header}>
+                      <td className="px-5 py-3 font-mono text-xs text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        {header}
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                        {description}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {uploadError && (
+            <div className="mt-6 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+              {uploadError}
+            </div>
+          )}
+
+          <div className="mt-6 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
+            Blank cells are allowed. Empty Salesforce fields can still be inferred for known custom metadata and product-derived mappings.
+          </div>
+        </main>
       </div>
     );
   }
@@ -356,19 +474,14 @@ export default function App() {
             </div>
             <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3 md:items-center">
               <div className="flex gap-2">
-                <label
+                <button
+                  onClick={openUploadGuide}
                   className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition cursor-pointer shadow-sm"
                   title="Upload CSV"
                 >
                   <Upload className="w-4 h-4" />
                   Upload CSV
-                  <input
-                    type="file"
-                    accept=".csv,text/csv"
-                    onChange={handleCsvUpload}
-                    className="sr-only"
-                  />
-                </label>
+                </button>
                 {dataSourceName !== "Bundled CSV" && (
                   <button
                     onClick={handleResetCsv}
