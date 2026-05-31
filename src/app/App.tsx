@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { fetchMappings, Mapping, parseMappingsCsv } from "./utils/data";
+import { fetchMappings, Mapping, parseMappingsCsv, sampleMappingsCsvText } from "./utils/data";
 import { MappingCard } from "./components/MappingCard";
-import { LayoutDashboard, Filter, Search, List, Activity, Menu, X, Moon, Sun, Upload, RotateCcw, ArrowLeft, FileText } from "lucide-react";
+import { LayoutDashboard, Filter, Search, List, Activity, Menu, X, Moon, Sun, Upload, RotateCcw, ArrowLeft, FileText, Download } from "lucide-react";
 
 const csvFormatRows = [
   ["Sync operation", "Functional area for the mapping, such as Contract Creation or Subscription Creation."],
@@ -101,6 +101,16 @@ export default function App() {
       console.error(err);
       setUploadError("Could not reload the bundled CSV.");
     }
+  };
+
+  const handleDownloadSampleCsv = () => {
+    const blob = new Blob([sampleMappingsCsvText], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "mappings.sample.csv";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const uniqueOperations = useMemo(() => {
@@ -242,6 +252,30 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </section>
+
+          <section className="mt-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-slate-950 dark:text-white">Sample CSV</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Use this as a starting point or compare your own file against the expected structure.
+                </p>
+              </div>
+              <button
+                onClick={handleDownloadSampleCsv}
+                className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm"
+                title="Download sample CSV"
+              >
+                <Download className="w-4 h-4" />
+                Download CSV
+              </button>
+            </div>
+            <div className="bg-slate-950 dark:bg-black">
+              <pre className="max-h-96 overflow-auto p-5 text-xs leading-5 text-slate-100 font-mono whitespace-pre">
+                {sampleMappingsCsvText}
+              </pre>
             </div>
           </section>
 

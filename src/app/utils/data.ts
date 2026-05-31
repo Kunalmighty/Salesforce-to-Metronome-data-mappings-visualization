@@ -1,6 +1,8 @@
 import Papa from "papaparse";
 import csvFileText from "../../imports/mappings.sample.csv?raw";
 
+export const sampleMappingsCsvText = csvFileText;
+
 export interface Mapping {
   [key: string]: string | undefined;
 }
